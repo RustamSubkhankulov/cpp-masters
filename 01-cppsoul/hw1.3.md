@@ -37,6 +37,11 @@ bar(int*, int, int):
 
 ```cpp
 int foo(int*a, int base, int off) {
+  if (!a) {
+    std::print(std::cerr, "Null ptr\n");
+    return 42;
+  }
+
   if (base < 0) {
     std::print(std::cerr, "Negative base\n");
     return 42;
@@ -102,6 +107,10 @@ Signed integer overflow
 Избавимся от выводов сообщений об ошибках, чтобы лучше рассмотреть ассемблер:
 ```cpp
 int foo(int*a, int base, int off) {
+  if (!a) {
+    return 42;
+  }
+
   if (base < 0) {
     return 42;
   }
@@ -120,9 +129,13 @@ int foo(int*a, int base, int off) {
 Результат компиляции x86-64 clang 21.1.0 с флагами ``-O2 --std=c++23``: https://godbolt.org/z/f8fP7eMqc
 ```asm
 foo(int*, int, int):
-        mov     eax, 42
+        test    rdi, rdi
+        sete    al
         test    esi, esi
-        js      .LBB0_4
+        sets    cl
+        or      cl, al
+        mov     eax, 42
+        jne     .LBB0_4
         test    edx, edx
         sets    cl
         mov     r8d, edx
